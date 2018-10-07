@@ -41,6 +41,8 @@ Module.symvers
 #
 # Top-level generic files
 #
+/gen
+/out
 /tags
 /TAGS
 /linux
