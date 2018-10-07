@@ -2,18 +2,20 @@
 
 export ARCH=arm64
 export HEADER_ARCH=arm64
-export CROSS_COMPILE=aarch64-linux-gnu-
-export CCOMPILE=$CROSS_COMPILE
+export CROSS_COMPILE2=aarch64-linux-gnu-
+export CCOMPILE=$CROSS_COMPILE2
 
 #Change Toolchain GCC versions from here
-#But I personally prefer Google's x86_64-linux-android-4.9
+#But I personally prefer Google's TC and Clang
 GCC_VERSION=4.9
+CLANG_DIR=google_clang
 
 TC_PREFIX=aarch64-linux-gnu
 TOOLCHAIN=$TC_PREFIX-$GCC_VERSION
 CUR_DIR=$PWD
 
-toolchain_url="https://github.com/ryan-andri/aarch64-linaro-linux-gnu-4.9"
+toolchain_url="https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9"
+clang_url="https://github.com/sayeed99/clang-4691093-pie"
 
 clear
 
@@ -38,7 +40,7 @@ echo "Environment Setup Complete Now Moving To Compiling"
 echo ""
 echo ""
 echo ""
-echo "-----CHECKING IF TOOLCHAIN IS IN CORRECT PATH-------"
+echo "-----CHECKING IF TOOLCHAIN AND CLANG IS IN CORRECT PATH-------"
 sleep $SLEEP
 cd ..
 TC=$PWD
@@ -52,8 +54,6 @@ then
    echo ""
    echo ""
    echo ""
-   sleep $SLEEP
-   echo "------------------COMPILING----------------------"
 else
    echo "Could not find toolchain at $TC/$TOOLCHAIN/"
    echo "DOWNLOADING TOOLCAHIN"
@@ -61,6 +61,30 @@ else
    echo "Starting Compilation"
    echo "SETTING TOOLCHAIN PATH : $TC/$TOOLCHAIN/bin"
    export PATH=$TC/$TOOLCHAIN/bin-ccache:$TC/$TOOLCHAIN/bin:$PATH
+   echo ""
+   echo ""
+   echo ""
+fi
+
+if [ -f $TC/$CLANG_DIR/bin/clang ];
+then
+   cd $CUR_DIR
+   echo "Clang exists"
+   echo "Starting Compilation"
+   echo "SETTING Clang PATH : $TC/$CLANG_DIR/bin"
+   export PATH=$TC/$CLANG_DIR/bin-ccache:$TC/$CLANG_DIR/bin:$PATH
+   echo ""
+   echo ""
+   echo ""
+   sleep $SLEEP
+   echo "------------------COMPILING----------------------"
+else
+   echo "Could not find clang at $TC/$CLANG_DIR/"
+   echo "DOWNLOADING TOOLCAHIN"
+   git clone $clang_url $CLANG_DIR
+   echo "Starting Compilation"
+   echo "SETTING Clang PATH : $TC/$CLANG_DIR/bin"
+   export PATH=$TC/$CLANG_DIR/bin-ccache:$TC/$CLANG_DIR/bin:$PATH
    echo ""
    echo ""
    echo ""
@@ -75,17 +99,21 @@ sleep $SLEEP
 echo "Starting Build Process"
 export USE_CCACHE=1
 sleep $SLEEP
+mkdir -p gen
 if [ -f .config ];
 then
    echo ".config exists"
 else
    echo ".config Does Not Exists"
    echo "Compiling From $DEFCONFIG"
-   make O=gen $DEFCONFIG
+   make O=gen ARCH=arm64 $DEFCONFIG
    sleep $SLEEP
 fi
-mkdir -p gen
-make O=gen $EV -j$CPUS 2>&1 | tee build.log
+make -j$(nproc --all) O=gen \
+                      ARCH=arm64 \
+                      CC="$TC/$CLANG_DIR/bin/clang" \
+                      CLANG_TRIPLE=$TC_PREFIX \
+                      CROSS_COMPILE="$TC/$TOOLCHAIN/bin/$CROSS_COMPILE2" 2>&1 | tee build.log
 
 if [ -f $BZIMAGE ];
 then
@@ -136,7 +164,7 @@ echo "Completion Time :"
 echo "$runtime sec\n"
 
 echo "------------------- CLEANING------------------------"
-#make O=gen clean
-#rm -rf gen
+make O=gen clean
+rm -rf gen
 echo "----------------------DONE--------------------------"
 
