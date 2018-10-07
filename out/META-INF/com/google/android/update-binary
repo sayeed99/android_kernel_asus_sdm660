@@ -89,6 +89,17 @@ if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.devicecheck)" == 1 ]; then
   fi;
 fi;
 
+ui_print "                                               ";
+ui_print "                                               ";
+ui_print "___________.__                      __________ ";
+ui_print "\_   _____/|  | _____ _______   ____\______   \";
+ui_print " |    __)  |  | \__  \\_  __ \_/ __ \|     ___/";
+ui_print " |     \   |  |__/ __ \|  | \/\  ___/|    |    ";
+ui_print " \___  /   |____(____  /__|    \___  >____|    ";
+ui_print "     \/              \/            \/          ";
+ui_print "                                  Flare Kernels";
+ui_print "                                               ";
+
 ui_print "Installing kernel...";
 for i in $($bb --list); do
   $bb ln -s $bb /tmp/anykernel/bin/$i;
